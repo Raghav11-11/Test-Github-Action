@@ -1,9 +1,9 @@
 name: aps-19023-smoke
 
-# APS-19023: end-to-end smoke for the github-actions Node 20 -> 24 migration.
-# Consumes setup-env + setup-local from the PR branch under test:
-#   Raghav11-11/github-actions @ aps-19023-node24-migration
-# (Upstream PR: https://github.com/browserstack/github-actions/pull/84)
+# APS-19023: post-merge smoke against upstream master.
+# PR #84 merged to browserstack/github-actions:master 2026-05-05.
+# This consumes setup-env + setup-local @ master (canonical customer reference)
+# to verify the deprecation warning is gone for real-world usage.
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: BrowserStack Env Setup
-        uses: Raghav11-11/github-actions/setup-env@aps-19023-node24-migration
+        uses: browserstack/github-actions/setup-env@master
         with:
           username:   ${{ secrets.BROWSERSTACK_USERNAME }}
           access-key: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
@@ -29,7 +29,7 @@ jobs:
           project-name: aps-19023
 
       - name: BrowserStackLocal Start
-        uses: Raghav11-11/github-actions/setup-local@aps-19023-node24-migration
+        uses: browserstack/github-actions/setup-local@master
         with:
           local-testing: start
           local-identifier: aps-19023-${{ github.run_id }}-${{ matrix.os }}
@@ -51,6 +51,6 @@ jobs:
 
       - name: BrowserStackLocal Stop
         if: always()
-        uses: Raghav11-11/github-actions/setup-local@aps-19023-node24-migration
+        uses: browserstack/github-actions/setup-local@master
         with:
           local-testing: stop
