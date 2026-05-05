@@ -1,0 +1,56 @@
+name: aps-19023-smoke
+
+# APS-19023: end-to-end smoke for the github-actions Node 20 -> 24 migration.
+# Consumes setup-env + setup-local from the PR branch under test:
+#   Raghav11-11/github-actions @ aps-19023-node24-migration
+# (Upstream PR: https://github.com/browserstack/github-actions/pull/84)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: BrowserStack Env Setup
+        uses: Raghav11-11/github-actions/setup-env@aps-19023-node24-migration
+        with:
+          username:   ${{ secrets.BROWSERSTACK_USERNAME }}
+          access-key: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          build-name: aps-19023-smoke-${{ github.run_id }}-${{ matrix.os }}
+          project-name: aps-19023
+
+      - name: BrowserStackLocal Start
+        uses: Raghav11-11/github-actions/setup-local@aps-19023-node24-migration
+        with:
+          local-testing: start
+          local-identifier: aps-19023-${{ github.run_id }}-${{ matrix.os }}
+          local-logging-level: all-logs
+
+      - name: Verify env vars are set
+        shell: bash
+        run: |
+          echo "USERNAME set:          ${BROWSERSTACK_USERNAME:+yes}"
+          echo "ACCESS_KEY set:        ${BROWSERSTACK_ACCESS_KEY:+yes}"
+          echo "BUILD_NAME=$BROWSERSTACK_BUILD_NAME"
+          echo "PROJECT_NAME=$BROWSERSTACK_PROJECT_NAME"
+          echo "LOCAL_IDENTIFIER=$BROWSERSTACK_LOCAL_IDENTIFIER"
+          test -n "$BROWSERSTACK_USERNAME"          || (echo "missing BROWSERSTACK_USERNAME"          && exit 1)
+          test -n "$BROWSERSTACK_ACCESS_KEY"        || (echo "missing BROWSERSTACK_ACCESS_KEY"        && exit 1)
+          test -n "$BROWSERSTACK_BUILD_NAME"        || (echo "missing BROWSERSTACK_BUILD_NAME"        && exit 1)
+          test -n "$BROWSERSTACK_PROJECT_NAME"      || (echo "missing BROWSERSTACK_PROJECT_NAME"      && exit 1)
+          test -n "$BROWSERSTACK_LOCAL_IDENTIFIER"  || (echo "missing BROWSERSTACK_LOCAL_IDENTIFIER"  && exit 1)
+
+      - name: BrowserStackLocal Stop
+        if: always()
+        uses: Raghav11-11/github-actions/setup-local@aps-19023-node24-migration
+        with:
+          local-testing: stop
